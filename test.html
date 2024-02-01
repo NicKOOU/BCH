@@ -48,6 +48,7 @@
 
     <label for="actionSelector">Select Person:</label>
     <select id="actionSelector" onchange="updateButtons()">
+        <option value="none">Select person</option>
         <option value="manufacturer">Manufacturer</option>
         <option value="dealer">Dealer</option>
         <option value="client">Client</option>
@@ -653,8 +654,8 @@
             const btn2 = document.getElementById('btn2');
 
             // Reset buttons
-            btn1.textContent = 'Action 1';
-            btn2.textContent = 'Action 2';
+            btn1.textContent = 'Register Vehicle';
+            btn2.textContent = 'none';
 
             switch (selectedPerson) {
                 case 'manufacturer':
@@ -687,6 +688,8 @@
                     btn2.style.display = 'none';
                     break;
                 default:
+                    btn1.textContent = 'Register Vehicle';
+                    btn2.style.display = 'none';
                     break;
             }
         }
@@ -726,46 +729,154 @@
         async function registerVehicle(licensePlate) {
             try{
                 const res = await vehicleMaintenanceContract.methods.registerVehicle(client, licensePlate).send({ from: manufacturer });
-                // write in result div
-                document.getElementById('result').innerHTML = JSON.stringify(res);
-            } catch (err) {
-                document.getElementById('result').innerHTML = err;
+                const transactionHash = res.transactionHash;
+                const gasUsed = res.gasUsed;
+                const status = res.status;
+                const values = res.events.VehicleRegistered.returnValues;
 
+                // ne pas afficher tout le hash
+                const shortTransactionHash = `${transactionHash.substring(0, 6)}...${transactionHash.substring(transactionHash.length - 4)}`;
+
+                const resultContainer = document.getElementById('result');
+
+                resultContainer.innerHTML = `
+                    <strong>Transaction Hash:</strong> ${shortTransactionHash}<br>
+                    <strong>Gas Used:</strong> ${gasUsed}<br>
+                    <strong>Status:</strong> ${status ? 'Success' : 'Failed'}<br>
+                    <strong>Valeur:</strong> <pre>${JSON.stringify(values, null, 2)}</pre>
+                `;
+            } catch (err) {
+                document.getElementById('result').innerHTML = `<strong>Error:</strong> ${err.message}`;
             }
+
         }
 
         async function assessVehicleValueForResale(licensePlate) {
-            try{
-                const res = await vehicleMaintenanceContract.methods.assessVehicleValueForResale(licensePlate).send({ from: dealer });
-                // write in result div
-                document.getElementById('result').innerHTML = JSON.stringify(res);
-            } catch (err) {
-                document.getElementById('result').innerHTML = err;
+    try {
+        let res = await vehicleMaintenanceContract.methods.assessVehicleValueForResale(licensePlate).send({ from: dealer });
 
+        const transactionHash = res.transactionHash;
+        const gasUsed = res.gasUsed;
+        const status = res.status;
+        const values = res.events.RepairValidated?.returnValues;
+
+
+        
+        // ne pas afficher tout le hash
+        const shortTransactionHash = `${transactionHash.substring(0, 6)}...${transactionHash.substring(transactionHash.length - 4)}`;
+
+        
+        const resultContainer = document.getElementById('result');
+        resultContainer.innerHTML = `
+            <strong>Transaction Hash:</strong> ${shortTransactionHash}<br>
+            <strong>Gas Used:</strong> ${gasUsed}<br>
+            <strong>Status:</strong> ${status ? 'Success' : 'Failed'}<br>
+            <strong>Valeur:</strong> <pre>${JSON.stringify(values, null, 2)}</pre>
+        `;
+    } catch (err) {
+        // Display error message
+        document.getElementById('result').innerHTML = `<strong>Error:</strong> ${err.message}`;
+    }
+}
+
+
+        async function requestPreventiveMaintenance(licensePlate) {
+          try {
+            let res = await vehicleMaintenanceContract.methods.requestPreventiveMaintenance(licensePlate).send({ from: client });
+
+            const transactionHash = res.transactionHash;
+            const gasUsed = res.gasUsed;
+            const status = res.status;
+            const values = res.events.PreventiveMaintenanceRequested.returnValues;
+
+            // ne pas afficher tout le hash
+            const shortTransactionHash = `${transactionHash.substring(0, 6)}...${transactionHash.substring(transactionHash.length - 4)}`;
+
+            const resultContainer = document.getElementById('result');
+
+            resultContainer.innerHTML = `
+                <strong>Transaction Hash:</strong> ${shortTransactionHash}<br>
+                <strong>Gas Used:</strong> ${gasUsed}<br>
+                <strong>Status:</strong> ${status ? 'Success' : 'Failed'} <br>
+                <strong>Valeur:</strong> <pre>${JSON.stringify(values, null, 2)}</pre>
+
+            `;
+        } catch (err) {
+            
+              // Display error message
+              document.getElementById('result').innerHTML = `<strong>Error:</strong> ${err.message}`;
+
+        }
+
+
+        }
+
+        async function validateRepair(licensePlate) {
+            // function validateRepair(string memory _licensePlate) external onlyMechanic
+
+            try {
+                let res = await vehicleMaintenanceContract.methods.validateRepair(licensePlate).send({ from: mechanic });
+
+                const transactionHash = res.transactionHash;
+                const gasUsed = res.gasUsed;
+                const status = res.status;
+                const values = res.events.RepairValidated.returnValues;
+
+                // ne pas afficher tout le hash
+                const shortTransactionHash = `${transactionHash.substring(0, 6)}...${transactionHash.substring(transactionHash.length - 4)}`;
+
+                const resultContainer = document.getElementById('result');
+
+                resultContainer.innerHTML = `
+                    <strong>Transaction Hash:</strong> ${shortTransactionHash}<br>
+                    <strong>Gas Used:</strong> ${gasUsed}<br>
+                    <strong>Status:</strong> ${status ? 'Success' : 'Failed'}
+                    <strong>Timestamp:</strong> <pre>${JSON.stringify(values, null, 2)}</pre>
+                `;
+            } catch (err) {
+                // Display error message
+                document.getElementById('result').innerHTML = `<strong>Error:</strong> ${err.message}`;
+            }
+
+        }
+
+        async function accessDataForInsurance(licensePlate) {
+            //accessMaintenanceHistory
+            try {
+                let res = await vehicleMaintenanceContract.methods.accessDataForInsurance(licensePlate).call({ from: insurer });
+
+                const transactionHash = res.transactionHash;
+                const gasUsed = res.gasUsed;
+                const status = res.status;
+                console.log(res);
+                const values = res.events.RepairValidated?.returnValues;
+
+                // ne pas afficher tout le hash
+                const shortTransactionHash = `${transactionHash.substring(0, 6)}...${transactionHash.substring(transactionHash.length - 4)}`;
+
+                const resultContainer = document.getElementById('result');
+
+                resultContainer.innerHTML = `
+                    <strong>Transaction Hash:</strong> ${shortTransactionHash}<br>
+                    <strong>Gas Used:</strong> ${gasUsed}<br>
+                    <strong>Status:</strong> ${status ? 'Success' : 'Failed'}
+                    <strong>Timestamp:</strong> <pre>${JSON.stringify(values, null, 2)}</pre>
+                `;
+            } catch (err) {
+                // Display error message
+                document.getElementById('result').innerHTML = `<strong>Error:</strong> ${err.message}`;
             }
         }
 
-        function requestPreventiveMaintenance(licensePlate) {
+        async function accessDataForRegistration(licensePlate) {
             // Your code goes here
         }
 
-        function validateRepair(licensePlate) {
+        async function accessDataForPoliceInvestigation(licensePlate) {
             // Your code goes here
         }
 
-        function accessDataForInsurance(licensePlate) {
-            // Your code goes here
-        }
-
-        function accessDataForRegistration(licensePlate) {
-            // Your code goes here
-        }
-
-        function accessDataForPoliceInvestigation(licensePlate) {
-            // Your code goes here
-        }
-
-        // Add other functions for other actions
+        // Add other async functions for other actions
 
         // You may need to add other functions as well
     </script>

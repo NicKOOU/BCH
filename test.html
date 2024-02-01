@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Contract Tester</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input,
+        select {
+            margin-bottom: 10px;
+            padding: 5px;
+            width: 300px;
+        }
+
+        button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Smart Contract Tester</h1>
+
+    <label for="actionSelector">Select Person:</label>
+    <select id="actionSelector" onchange="updateButtons()">
+        <option value="manufacturer">Manufacturer</option>
+        <option value="dealer">Dealer</option>
+        <option value="client">Client</option>
+        <option value="mechanic">Mechanic</option>
+        <option value="insurer">Insurer</option>
+        <option value="prefecture">Prefecture</option>
+        <option value="police">Police</option>
+    </select>
+
+    <label for="licensePlate">License Plate:</label>
+    <input type="text" id="licensePlate" placeholder="Enter license plate">
+
+    <!-- Add more input fields for other parameters as needed -->
+
+    <button id="btn1" onclick="performAction()">Action 1</button>
+    <button id="btn2" onclick="performAction()">Action 2</button>
+    <!-- Add more buttons for other functions -->
+
+    <div id="result"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.6.0/dist/web3.min.js"></script>
+    <script>
+
+
+        // Mettez à jour avec l'adresse du contrat déployé
+        const contractAddress = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
+
+        // Mettez à jour avec les adresses des participants
+        const manufacturer = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
+        const dealer = '0x70997970C51812dc3A010C7d01b50e0d17dc79C8';
+        const client = '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC';
+        const mechanic = '0x90F79bf6EB2c4f870365E785982E1f101E93b906';
+        const insurer = '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65';
+        const prefecture = '0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc';
+        const police = '0x976EA74026E726554dB657fA54763abd0C3a0aa9';
+
+        // Créer une instance Web3
+        const web3 = new Web3('http://127.0.0.1:8545/');
+
+        // Créer une instance du contrat
+        const vehicleMaintenanceContract = new web3.eth.Contract([
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_dealer",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_client",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_mechanic",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_insurer",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_prefecture",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_police",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "licensePlate",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "IssueReported",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "licensePlate",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "PreventiveMaintenanceRequested",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "licensePlate",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "RepairValidated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "licensePlate",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "VehicleDisposed",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "licensePlate",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "VehicleRegistered",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_licensePlate",
+          "type": "string"
+        }
+      ],
+      "name": "accessDataForInsurance",
+      "outputs": [],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_licensePlate",
+          "type": "string"
+        }
+      ],
+      "name": "accessDataForPoliceInvestigation",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_licensePlate",
+          "type": "string"
+        }
+      ],
+      "name": "accessDataForRegistration",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_licensePlate",
+          "type": "string"
+        }
+      ],
+      "name": "accessMaintenanceHistory",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_licensePlate",
+          "type": "string"
+        }
+      ],
+      "name": "assessVehicleValueForResale",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "client",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "dealer",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getAllRegisteredVehicles",
+      "outputs": [
+        {
+          "internalType": "address[]",
+          "name": "",
+          "type": "address[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getAllVehicleOwners",
+      "outputs": [
+        {
+          "internalType": "address[]",
+          "name": "",
+          "type": "address[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_vehicleOwner",
+          "type": "address"
+        }
+      ],
+      "name": "getVehicleLicensePlate",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "insurer",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "manufacturer",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "mechanic",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "name": "ownerByLicensePlate",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "police",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "prefecture",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_vehicleOwner",
+          "type": "address"
+        },
+        {
+          "internalType": "string",
+          "name": "_licensePlate",
+          "type": "string"
+        }
+      ],
+      "name": "registerVehicle",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_licensePlate",
+          "type": "string"
+        }
+      ],
+      "name": "reportIssue",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_licensePlate",
+          "type": "string"
+        }
+      ],
+      "name": "reportVehicleDisposal",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_licensePlate",
+          "type": "string"
+        }
+      ],
+      "name": "requestPreventiveMaintenance",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_oldVehicleOwner",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_newOwner",
+          "type": "address"
+        },
+        {
+          "internalType": "string",
+          "name": "_newLicensePlate",
+          "type": "string"
+        }
+      ],
+      "name": "transferVehicleOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_licensePlate",
+          "type": "string"
+        }
+      ],
+      "name": "validateRepair",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "vehiclesByOwner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "internalType": "bool",
+          "name": "isRegistered",
+          "type": "bool"
+        },
+        {
+          "internalType": "uint256",
+          "name": "lastServiceTimestamp",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "lastRepairTimestamp",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "isDisposed",
+          "type": "bool"
+        },
+        {
+          "internalType": "string",
+          "name": "licensePlate",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ], contractAddress);
+
+        // Fonction pour gérer les événements du contrat
+        function handleEvent(event) {
+            console.log(`Event ${event.event} received for ${event.returnValues.owner} at timestamp ${event.returnValues.timestamp}`);
+        }
+        function updateButtons() {
+            const selectedPerson = document.getElementById('actionSelector').value;
+            const btn1 = document.getElementById('btn1');
+            const btn2 = document.getElementById('btn2');
+
+            // Reset buttons
+            btn1.textContent = 'Action 1';
+            btn2.textContent = 'Action 2';
+
+            switch (selectedPerson) {
+                case 'manufacturer':
+                    btn1.textContent = 'Register Vehicle';
+                    btn2.style.display = 'none';
+                    break;
+                case 'dealer':
+                    btn1.textContent = 'Assess Vehicle Value for Resale';
+                    btn2.style.display = 'none';
+                    break;
+                case 'client':
+                    btn1.textContent = 'Request Preventive Maintenance';
+                    btn2.textContent = 'Report Issue';
+                    btn2.style.display = 'block';
+                    break;
+                case 'mechanic':
+                    btn1.textContent = 'Validate Repair';
+                    btn2.style.display = 'none';
+                    break;
+                case 'insurer':
+                    btn1.textContent = 'Access Data for Insurance';
+                    btn2.style.display = 'none';
+                    break;
+                case 'prefecture':
+                    btn1.textContent = 'Access Data for Registration';
+                    btn2.style.display = 'none';
+                    break;
+                case 'police':
+                    btn1.textContent = 'Access Data for Police Investigation';
+                    btn2.style.display = 'none';
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        function performAction() {
+            const selectedPerson = document.getElementById('actionSelector').value;
+            const licensePlate = document.getElementById('licensePlate').value;
+            console.log(`Performing action for ${selectedPerson} with license plate ${licensePlate}`);
+
+            switch (selectedPerson) {
+                case 'manufacturer':
+                    registerVehicle(licensePlate);
+                    break;
+                case 'dealer':
+                    assessVehicleValueForResale(licensePlate);
+                    break
+                case 'client':
+                    requestPreventiveMaintenance(licensePlate);
+                    break;
+                case 'mechanic':
+                    validateRepair(licensePlate);
+                    break;
+                case 'insurer':
+                    accessDataForInsurance(licensePlate);
+                    break;
+                case 'prefecture':
+                    accessDataForRegistration(licensePlate);
+                    break;
+                case 'police':
+                    accessDataForPoliceInvestigation(licensePlate);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        async function registerVehicle(licensePlate) {
+            try{
+                const res = await vehicleMaintenanceContract.methods.registerVehicle(client, licensePlate).send({ from: manufacturer });
+                // write in result div
+                document.getElementById('result').innerHTML = JSON.stringify(res);
+            } catch (err) {
+                document.getElementById('result').innerHTML = err;
+
+            }
+        }
+
+        async function assessVehicleValueForResale(licensePlate) {
+            try{
+                const res = await vehicleMaintenanceContract.methods.assessVehicleValueForResale(licensePlate).send({ from: dealer });
+                // write in result div
+                document.getElementById('result').innerHTML = JSON.stringify(res);
+            } catch (err) {
+                document.getElementById('result').innerHTML = err;
+
+            }
+        }
+
+        function requestPreventiveMaintenance(licensePlate) {
+            // Your code goes here
+        }
+
+        function validateRepair(licensePlate) {
+            // Your code goes here
+        }
+
+        function accessDataForInsurance(licensePlate) {
+            // Your code goes here
+        }
+
+        function accessDataForRegistration(licensePlate) {
+            // Your code goes here
+        }
+
+        function accessDataForPoliceInvestigation(licensePlate) {
+            // Your code goes here
+        }
+
+        // Add other functions for other actions
+
+        // You may need to add other functions as well
+    </script>
+
+</body>

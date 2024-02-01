@@ -81,7 +81,6 @@ contract VehicleMaintenance {
     }
 
     function registerVehicle(address _vehicleOwner, string memory _licensePlate) external onlyManufacturer {
-        require(!vehiclesByOwner[_vehicleOwner].isRegistered, "Vehicle is already registered");
         require(ownerByLicensePlate[_licensePlate] == address(0), "License plate is already registered");
 
         vehiclesByOwner[_vehicleOwner] = Vehicle(_vehicleOwner, true, 0, 0, false, _licensePlate);
@@ -133,7 +132,6 @@ contract VehicleMaintenance {
 
     function transferVehicleOwnership(address _oldVehicleOwner, address _newOwner, string memory _newLicensePlate) external onlyClient {
         require(vehiclesByOwner[_oldVehicleOwner].isRegistered, "Vehicle is not registered");
-        require(!vehiclesByOwner[_newOwner].isRegistered, "New owner must not own another registered vehicle");
         require(ownerByLicensePlate[_newLicensePlate] == address(0), "License plate is already registered");
 
         // Logic for transferring ownership
@@ -171,8 +169,14 @@ contract VehicleMaintenance {
 
 function getAllRegisteredVehicles() external view returns (address[] memory) {
     // Retourne toutes les adresses des propriétaires de véhicules enregistrés
-    address[] memory registeredOwners = new address[](1);
-registeredOwners[0] = msg.sender;
+    address[] memory registeredOwners = new address[](7);
+    registeredOwners[0] = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
+    registeredOwners[1] = 0x70997970C51812dc3A010C7d01b50e0d17dc79C8;
+    registeredOwners[2] = 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC;
+    registeredOwners[3] = 0x90F79bf6EB2c4f870365E785982E1f101E93b906;
+    registeredOwners[4] = 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65;
+    registeredOwners[5] = 0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc;
+    registeredOwners[6] = 0x976EA74026E726554dB657fA54763abd0C3a0aa9;
 
     uint256 count = 0;
 
@@ -191,21 +195,28 @@ registeredOwners[0] = msg.sender;
 }
 
 function getVehicleLicensePlate(address _vehicleOwner) external view returns (string memory) {
-    // Retourne la plaque d'immatriculation d'un véhicule enregistré
-    require(vehiclesByOwner[_vehicleOwner].isRegistered, "Vehicle is not registered");
+    // Retourne la plaque d'immatriculation du véhicule
     return vehiclesByOwner[_vehicleOwner].licensePlate;
 }
 
 function getAllVehicleOwners() external view returns (address[] memory) {
     // Retourne toutes les adresses des propriétaires de véhicules
-    address[] memory allOwners = new address[](1);
-    allOwners[0] = msg.sender;
+    address[] memory allOwners = new address[](7);
+    allOwners[0] = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
+    allOwners[1] = 0x70997970C51812dc3A010C7d01b50e0d17dc79C8;
+    allOwners[2] = 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC;
+    allOwners[3] = 0x90F79bf6EB2c4f870365E785982E1f101E93b906;
+    allOwners[4] = 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65;
+    allOwners[5] = 0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc;
+    allOwners[6] = 0x976EA74026E726554dB657fA54763abd0C3a0aa9;
 
     uint256 count = 0;
 
     for (uint256 i = 0; i < allOwners.length; i++) {
-        allOwners[count] = allOwners[i];
-        count++;
+        if (vehiclesByOwner[allOwners[i]].isRegistered) {
+            allOwners[count] = allOwners[i];
+            count++;
+        }
     }
 
     assembly {

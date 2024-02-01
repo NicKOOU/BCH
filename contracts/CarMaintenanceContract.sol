@@ -27,6 +27,7 @@ contract VehicleMaintenance {
     event RepairValidated(address indexed owner, string licensePlate, uint256 timestamp);
     event VehicleDisposed(address indexed owner, string licensePlate, uint256 timestamp);
     event VehicleRegistered(address indexed owner, string licensePlate, uint256 timestamp);
+    event VehicleInformationRequested(address indexed owner, bool isRegistered, uint256 lastServiceTimestamp, uint256 lastRepairTimestamp, bool isDisposed, string licensePlate);
 
     modifier onlyManufacturer() {
         require(msg.sender == manufacturer, "Only manufacturer can call this function");
@@ -110,9 +111,17 @@ contract VehicleMaintenance {
         vehiclesByOwner[_vehicleOwner].lastRepairTimestamp = block.timestamp;
     }
 
-    function accessDataForInsurance(string memory _licensePlate) external onlyInsurer view {
+    function accessDataForInsurance(string memory _licensePlate) external onlyInsurer {
         address _vehicleOwner = ownerByLicensePlate[_licensePlate];
         require(vehiclesByOwner[_vehicleOwner].isRegistered, "Vehicle is not registered");
+        emit VehicleInformationRequested(
+            _vehicleOwner,
+            vehiclesByOwner[_vehicleOwner].isRegistered,
+            vehiclesByOwner[_vehicleOwner].lastServiceTimestamp,
+            vehiclesByOwner[_vehicleOwner].lastRepairTimestamp,
+            vehiclesByOwner[_vehicleOwner].isDisposed,
+            vehiclesByOwner[_vehicleOwner].licensePlate
+        );
     }
 
     function accessMaintenanceHistory(string memory _licensePlate) external view returns (uint256, uint256) {
@@ -139,15 +148,20 @@ contract VehicleMaintenance {
         delete vehiclesByOwner[_oldVehicleOwner];
     }
 
-    function accessDataForRegistration(string memory _licensePlate) external onlyPrefecture view returns (bool) {
+    function accessDataForPoliceInvestigation(string memory _licensePlate) external onlyPolice view returns (address, bool, uint256, uint256, bool, string memory) {
         address _vehicleOwner = ownerByLicensePlate[_licensePlate];
-        return vehiclesByOwner[_vehicleOwner].isRegistered && !vehiclesByOwner[_vehicleOwner].isDisposed;
+        return (
+            vehiclesByOwner[_vehicleOwner].owner,
+            vehiclesByOwner[_vehicleOwner].isRegistered,
+            vehiclesByOwner[_vehicleOwner].lastServiceTimestamp,
+            vehiclesByOwner[_vehicleOwner].lastRepairTimestamp,
+            vehiclesByOwner[_vehicleOwner].isDisposed,
+            vehiclesByOwner[_vehicleOwner].licensePlate
+        );
     }
 
-    function accessDataForPoliceInvestigation(string memory _licensePlate) external onlyPolice view returns (uint256, uint256) {
-        address _vehicleOwner = ownerByLicensePlate[_licensePlate];
-        require(vehiclesByOwner[_vehicleOwner].isRegistered, "Vehicle is not registered");
-        return (vehiclesByOwner[_vehicleOwner].lastServiceTimestamp, vehiclesByOwner[_vehicleOwner].lastRepairTimestamp);
+    function accessVehicleOwner(string memory _licensePlate) external onlyPrefecture view returns (address) {
+        return ownerByLicensePlate[_licensePlate];
     }
 
     function reportVehicleDisposal(string memory _licensePlate) external onlyClient {
